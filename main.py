@@ -25,7 +25,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Posteract poster workflow")
     parser.add_argument("--config", default="config.yaml", help="Path to config file")
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--item", type=int, help="Process a single Plex rating key")
+    group.add_argument("--item", type=str, help="Process a single Plex item by rating key or title")
     group.add_argument("--all", action="store_true", help="Process all configured libraries")
     group.add_argument("--test", action="store_true", help="Run the workflow against sample data")
     group.add_argument(
@@ -65,10 +65,20 @@ def build_workflow(config: dict) -> tuple[PosterWorkflow, PlexService, PosterJob
     return workflow, plex_service, job_store
 
 
-def run_for_item(workflow: PosterWorkflow, plex: PlexService, rating_key: int) -> WorkflowResult:
-    media_item = plex.build_media_item(rating_key)
-    if not media_item:
-        raise RuntimeError(f"Plex item with rating key {rating_key} not found")
+def run_for_item(workflow: PosterWorkflow, plex: PlexService, identifier: str) -> WorkflowResult:
+    identifier = identifier.strip()
+    media_item: Optional[MediaItem] = None
+
+    if identifier.isdigit():
+        rating_key = int(identifier)
+        media_item = plex.build_media_item(rating_key)
+        if not media_item:
+            raise RuntimeError(f"Plex item with rating key {rating_key} not found")
+    else:
+        media_item = plex.find_media_item_by_title(identifier)
+        if not media_item:
+            raise RuntimeError(f"Plex item titled '{identifier}' not found")
+
     return workflow.process_item(media_item)
 
 
@@ -120,7 +130,7 @@ def main() -> None:
         log_results(results)
         return
 
-    if args.item:
+    if args.item is not None:
         result = run_for_item(workflow, plex_service, args.item)
         log_results([result])
         return
