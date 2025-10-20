@@ -1,14 +1,14 @@
 plex:
-  url: "http://192.168.1.78:32400"
-  token: "7j2bypRewczBQJxNcnKR"
+  url: "http://your-plex-server:32400"
+  token: "PLEX_TOKEN_PLACEHOLDER"
 
 tmdb:
-  apiKey: "a3fe9861bbf54b5f8c7d26e390e006d0"
+  apiKey: "TMDB_API_KEY_PLACEHOLDER"
   language: "en-US"
 
 fanart:
   enabled: true
-  api_key: "YOUR_FANART_TV_API_KEY"
+  api_key: "FANART_TV_API_KEY_PLACEHOLDER"
 
 overlays:
   enable: true

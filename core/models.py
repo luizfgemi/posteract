@@ -8,7 +8,7 @@ class MediaItem:
     Represents a Movie or TV Show from Plex/TMDB.
     Holds all identifiers we might need.
     """
-    plex_id: int                 # Plex ratingKey
+    plex_id: Optional[int]       # Plex ratingKey
     title: str
     year: Optional[int]
     tmdb_id: Optional[int]       # For TMDB
