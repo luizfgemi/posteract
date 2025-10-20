@@ -130,6 +130,11 @@ class PosterWorkflow:
 
     def _download(self, url: str, filename: str) -> str:
         target = self.cache_dir / filename
+
+        if target.exists():
+            logger.info(f"Using cached poster: {target}")
+            return str(target)
+
         logger.debug(f"Downloading poster → {url} -> {target}")
         try:
             with httpx.stream("GET", url, timeout=30.0) as response:

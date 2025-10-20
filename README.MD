@@ -1,30 +1,39 @@
 ## Posteract Roadmap — Full Replacement for Posterizarr and Kometa (Poster and Artwork Features)
 
-### 1. Core (Already Implemented)
-- Load configuration from `config.yaml`
-- Connect to Plex (PlexAPI)
-- Retrieve libraries from Plex
-- Fetch posters from TMDB (textless, language-specific, fallback)
-- Fetch artwork from Fanart.tv (textless posters)
-- Poster source selection via `poster_preferences`
-- Upload posters to Plex
-- Logging using Loguru
+### 1. Core (Implemented)
+* Load configuration from `config.yaml`
+* Connect to Plex (PlexAPI)
+* Retrieve libraries from Plex
+* Fetch posters from TMDB (textless, language-specific, fallback)
+* Fetch artwork from Fanart.tv (textless posters)
+* Poster source selection via `poster_preferences`
+* Upload posters to Plex
+* Logging using Loguru
 
 ---
 
-### 2. Phase 1 — Basic Poster Workflow
-Goal: Automate poster download and upload for each media item.
+### 2. Phase 1 — Basic Poster Workflow ✅
+Posteract now automates the full basic poster workflow from discovery through upload.
 
-- Implement poster download and local caching
-- Add SQLite database to store:
-  - media_id, tmdb_id, source_used, poster_type, status
-  - timestamps, retry attempts, quality selection
-- Implement PosterTask lifecycle: select → download → save → upload
-- CLI support:
-  - `posteract --item "Movie Title"`
-  - `posteract --all`
-  - `posteract --test`
-- Implement poster reset (same behavior as Posterizarr’s Reset-PlexLibraryPictures)
+**Poster lifecycle**
+* Poster selection is orchestrated with TMDB and Fanart.tv sources according to configuration.
+* Downloads are cached locally under `output/posters/` and reused automatically on subsequent runs.
+* Poster status is persisted in SQLite via `poster_jobs`, including media identifiers, source metadata, timestamps, retry tracking, and chosen quality.
+* Poster results are logged in `poster_cache` for quick lookups of previously used artwork.
+
+**Command line interface**
+```
+posteract --config /path/to/config.yaml --item "Movie Title"
+posteract --config /path/to/config.yaml --all
+posteract --config /path/to/config.yaml --test
+posteract --config /path/to/config.yaml --reset           # reset every library
+posteract --config /path/to/config.yaml --reset Movies TV  # reset specific libraries
+```
+
+* `--item` accepts either a Plex rating key or an exact title.
+* `--all` processes every item in the configured libraries.
+* `--test` runs against built-in demo data without Plex access.
+* `--reset` clears the local cache, wipes the job database, and invokes the same Plex poster reset flow as Posterizarr's `Reset-PlexLibraryPictures` task.
 
 ---
 
