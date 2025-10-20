@@ -1,0 +1,17 @@
+plex:
+  url: "http://192.168.1.78:32400"
+  token: "7j2bypRewczBQJxNcnKR"
+
+tmdb:
+  apiKey: "a3fe9861bbf54b5f8c7d26e390e006d0"
+  language: "en-US"
+
+fanart:
+  enabled: true
+  api_key: "YOUR_FANART_TV_API_KEY"
+
+overlays:
+  enable: true
+  path: "resources/overlays"
+
+outputDirectory: "output/posters"
