@@ -45,6 +45,29 @@ class PlexService:
                 logger.warning(f"Error searching in section {section.title}: {e}")
         return None
 
+    def find_media_item_by_title(self, title: str) -> Optional[MediaItem]:
+        """Search across Plex libraries and return the first matching media item."""
+
+        normalized = title.strip().lower()
+        fallback: Movie | Show | None = None
+
+        for section in self._plex.library.sections():
+            try:
+                results = section.search(title=title)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(f"Error searching in section {section.title}: {exc}")
+                continue
+
+            for candidate in results:
+                candidate_title = getattr(candidate, "title", "").strip().lower()
+                if candidate_title == normalized:
+                    return self._to_media_item(candidate)
+
+            if not fallback and results:
+                fallback = results[0]
+
+        return self._to_media_item(fallback) if fallback else None
+
     def upload_poster_by_rating_key(self, rating_key: int, image_path: str) -> bool:
         item = self.get_item_by_rating_key(rating_key)
         if not item:

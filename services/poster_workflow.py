@@ -62,6 +62,7 @@ class PosterWorkflow:
             source_used=self._source_from_type(task.source_type),
             poster_type=task.source_type,
             status=task.status,
+            quality_selection=self.desired_type,
         )
 
         if task.status != "selected" or not task.chosen_url:

@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS poster_jobs (
     tmdb_id INTEGER,
     source_used TEXT,
     poster_type TEXT,
+    quality_selection TEXT,
     status TEXT NOT NULL,
     retry_count INTEGER NOT NULL DEFAULT 0,
     last_error TEXT,
@@ -46,6 +47,12 @@ class PosterJobStore:
     def _ensure_schema(self) -> None:
         with self._get_conn() as conn:
             conn.executescript(_SCHEMA)
+            self._ensure_quality_column(conn)
+
+    def _ensure_quality_column(self, conn: sqlite3.Connection) -> None:
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(poster_jobs)")}
+        if "quality_selection" not in columns:
+            conn.execute("ALTER TABLE poster_jobs ADD COLUMN quality_selection TEXT")
 
     def upsert(
         self,
@@ -54,19 +61,31 @@ class PosterJobStore:
         source_used: Optional[str],
         poster_type: Optional[str],
         status: str,
+        quality_selection: Optional[str] = None,
     ) -> None:
         sql = """
-        INSERT INTO poster_jobs (media_id, tmdb_id, source_used, poster_type, status)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO poster_jobs (
+            media_id,
+            tmdb_id,
+            source_used,
+            poster_type,
+            quality_selection,
+            status
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
         ON CONFLICT(media_id) DO UPDATE SET
             tmdb_id = excluded.tmdb_id,
             source_used = excluded.source_used,
             poster_type = excluded.poster_type,
+            quality_selection = excluded.quality_selection,
             status = excluded.status,
             updated_at = DATETIME('now')
         """
         with self._get_conn() as conn:
-            conn.execute(sql, (media_id, tmdb_id, source_used, poster_type, status))
+            conn.execute(
+                sql,
+                (media_id, tmdb_id, source_used, poster_type, quality_selection, status),
+            )
 
     def update_status(
         self,
