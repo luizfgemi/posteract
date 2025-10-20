@@ -1,5 +1,10 @@
+from __future__ import annotations
+
+from typing import Iterable, List, Optional
+
 from plexapi.server import PlexServer
 from plexapi.video import Movie, Show
+
 from utils.logger import get_logger
 from core.models import MediaItem, PosterTask
 
@@ -78,3 +83,51 @@ class PlexService:
         except Exception as e:
             logger.error(f"Upload failed: {e}")
             return False
+
+    def iter_library_items(self, library_names: Optional[Iterable[str]] = None) -> List[MediaItem]:
+        media_items: List[MediaItem] = []
+        for section in self._plex.library.sections():
+            if library_names and section.title not in library_names:
+                continue
+            try:
+                for entry in section.all():
+                    media_item = self._to_media_item(entry)
+                    if media_item:
+                        media_items.append(media_item)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(f"Failed to list section {section.title}: {exc}")
+        return media_items
+
+    def build_media_item(self, rating_key: int) -> Optional[MediaItem]:
+        plex_item = self.get_item_by_rating_key(rating_key)
+        if not plex_item:
+            return None
+        return self._to_media_item(plex_item)
+
+    def _to_media_item(self, plex_item: Movie | Show) -> Optional[MediaItem]:
+        tmdb_id = None
+        imdb_id = None
+        tvdb_id = None
+        try:
+            for guid in getattr(plex_item, "guids", []) or []:
+                if guid.id.startswith("tmdb://"):
+                    tmdb_id = int(guid.id.split("//", 1)[1])
+                elif guid.id.startswith("imdb://"):
+                    imdb_id = guid.id.split("//", 1)[1]
+                elif guid.id.startswith("tvdb://"):
+                    tvdb_id = int(guid.id.split("//", 1)[1])
+        except Exception as exc:  # noqa: BLE001
+            logger.debug(f"Unable to parse GUIDs for {plex_item}: {exc}")
+
+        media_type = getattr(plex_item, "type", "movie")
+
+        return MediaItem(
+            plex_id=int(getattr(plex_item, "ratingKey")),
+            title=getattr(plex_item, "title", "Unknown"),
+            year=getattr(plex_item, "year", None),
+            tmdb_id=tmdb_id,
+            imdb_id=imdb_id,
+            tvdb_id=tvdb_id,
+            media_type=media_type,
+            poster_path=getattr(plex_item, "thumb", None),
+        )
